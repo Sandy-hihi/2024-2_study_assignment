@@ -19,7 +19,13 @@ public class Tile : MonoBehaviour
         // MyPos를 targetPos로 지정함
         // 위치를 targetPos 이동시키고, 배치에 따라 색깔을 지정
         // --- TODO ---
-        
+        MyPos = targetPos;
+
+        transform.localPosition = Utils.ToRealPos(targetPos);
+        if ((targetPos.Item1 + targetPos.Item2) % 2 == 0) { // 짝수 합이면 흰 타일, 홀수 합이면 검은 타일
+            MySpriteRenderer.color = tileColor;
+        }
+
         // ------
     }
 }

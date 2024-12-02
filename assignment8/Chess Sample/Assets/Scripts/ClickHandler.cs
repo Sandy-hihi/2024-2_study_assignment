@@ -63,17 +63,32 @@ public class ClickHandler : MonoBehaviour
             Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             var boardPos = GetBoardPosition(mousePosition); // 현재 좌표
 
-            // 좌표를 검증함
-            // selectedPiece가 움직일 수 있는지를 확인하고, 이동시킴
-            // 움직일 수 없다면 selectedPiece를 originalPosition으로 이동시킴
-            // effect를 초기화
-            // --- TODO ---
-            
-            // ------
+            // 좌표를 검증
+            if (Utils.IsInBoard(boardPos) && gameManager.IsValidMove(selectedPiece, boardPos))
+            {
+                // 유효한 움직임일 경우 이동
+                var originalBoardPos = selectedPiece.MyPos;
+
+                // 이동 처리
+                gameManager.Move(selectedPiece,boardPos);
+
+
+            }
+            else
+            {
+                // 유효하지 않은 움직임일 경우 원래 위치로 복귀
+                selectedPiece.transform.position = originalPosition;
+            }
+
+            // 효과 제거
+            gameManager.ClearEffects();
+
+            // 드래그 상태 해제
             isDragging = false;
             selectedPiece = null;
         }
     }
+
 
     void Update()
     {

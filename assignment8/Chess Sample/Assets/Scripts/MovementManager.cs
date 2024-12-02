@@ -18,13 +18,52 @@ public class MovementManager : MonoBehaviour
 
     private bool TryMove(Piece piece, (int, int) targetPos, MoveInfo moveInfo)
     {
-        // moveInfo의 distance만큼 direction을 이동시키며 이동이 가능한지를 체크
-        // 보드에 있는지, 다른 piece에 의해 막히는지 등을 체크
-        // 폰에 대한 예외 처리를 적용
-        // --- TODO ---
-        
-        // ------
+        (int x, int y) direction = (moveInfo.dirX, moveInfo.dirY);
+        (int startX, int startY) = piece.MyPos;
+
+        for (int i = 1; i <= moveInfo.distance; i++)
+        {
+            (int newX, int newY) = (startX + direction.x * i, startY + direction.y * i);
+
+            if (!Utils.IsInBoard((newX, newY))) return false; // 보드 바깥인지 확인
+            if (piece is Pawn) 
+            {
+                if (direction.x != 0) 
+                {
+                    if (gameManager.Pieces[newX, newY] != null &&
+                        gameManager.Pieces[newX, newY].PlayerDirection != piece.PlayerDirection)
+                    {
+                    
+                        return (newX, newY) == targetPos;
+                    }
+                    return false; 
+                }
+                else // 직선 이동일 경우
+                {
+                    if (gameManager.Pieces[newX, newY] != null) return false; // 경로에 다른 말이 있으면 이동 불가
+                    if ((newX, newY) == targetPos) return true; // 목표 위치 도달
+                }
+            }
+            else // 다른 기물의 일반 이동 처리
+            {
+                if (gameManager.Pieces[newX, newY] != null) // 다른 말에 막히는지 확인
+                {
+                    if (i == moveInfo.distance && gameManager.Pieces[newX, newY].PlayerDirection != piece.PlayerDirection)
+                    {
+                        // 마지막 칸에 적이 있을 경우, 공격 가능
+                        return (newX, newY) == targetPos;
+                    }
+                    return false; // 중간에 장애물 있음
+                }
+
+                if ((newX, newY) == targetPos) return true; // 목표 위치 도달
+            }
+        }
+
+        return false; // 이동 불가
     }
+
+
 
     // 체크를 제외한 상황에서 가능한 움직임인지를 검증
     private bool IsValidMoveWithoutCheck(Piece piece, (int, int) targetPos)
@@ -64,9 +103,11 @@ public class MovementManager : MonoBehaviour
     }
 
     // 체크인지를 확인
-    private bool IsInCheck(int playerDirection)
+    public bool IsInCheck(int playerDirection)
     {
-        (int, int) kingPos = (-1, -1); // 왕의 위치
+        (int kingX, int kingY) = (-1, -1);
+
+        // 왕의 위치를 찾기
         for (int x = 0; x < Utils.FieldWidth; x++)
         {
             for (int y = 0; y < Utils.FieldHeight; y++)
@@ -74,32 +115,50 @@ public class MovementManager : MonoBehaviour
                 var piece = gameManager.Pieces[x, y];
                 if (piece is King && piece.PlayerDirection == playerDirection)
                 {
-                    kingPos = (x, y);
+                    kingX = x;
+                    kingY = y;
                     break;
                 }
             }
-            if (kingPos.Item1 != -1 && kingPos.Item2 != -1) break;
+            if (kingX != -1 && kingY != -1) break;
         }
 
-        // 왕이 지금 체크 상태인지를 리턴
-        // gameManager.Pieces에서 Piece들을 참조하여 움직임을 확인
-        // --- TODO ---
-        
-        // ------
+        // 왕의 위치를 기준으로 적의 움직임을 확인
+        for (int x = 0; x < Utils.FieldWidth; x++)
+        {
+            for (int y = 0; y < Utils.FieldHeight; y++)
+            {
+                var enemyPiece = gameManager.Pieces[x, y];
+                if (enemyPiece != null && enemyPiece.PlayerDirection != playerDirection)
+                {
+                    if (IsValidMoveWithoutCheck(enemyPiece, (kingX, kingY)))
+                        return true; // 적이 왕을 공격할 수 있음
+                }
+            }
+        }
+
+        return false; // 체크 상태 아님
     }
+
 
     public void ShowPossibleMoves(Piece piece)
     {
         ClearEffects();
 
-        // 가능한 움직임을 표시
-        // IsValidMove를 사용
-        // effectPrefab을 effectParent의 자식으로 생성하고 위치를 적절히 설정
-        // currentEffects에 effectPrefab을 추가
-        // --- TODO ---
-        
-        // ------
+        for (int x = 0; x < Utils.FieldWidth; x++)
+        {
+            for (int y = 0; y < Utils.FieldHeight; y++)
+            {
+                if (IsValidMove(piece, (x, y)))
+                {
+                    var effect = Instantiate(effectPrefab, effectParent);
+                    effect.transform.position = Utils.ToRealPos((x, y));
+                    currentEffects.Add(effect);
+                }
+            }
+        }
     }
+
 
     // 효과 비우기
     public void ClearEffects()

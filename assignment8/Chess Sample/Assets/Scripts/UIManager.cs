@@ -23,13 +23,12 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // 턴이 바뀌었음을 알림
+  
     public void UpdateTurn(int currentTurn)
     {
-        TurnText.text = currentTurn == 1 ? "White's Turn" : "Black's Turn";
+        TurnText.text = currentTurn == 1 ? "화이트의 턴" : "블랙의 턴";
     }
 
-    // message를 duration동안 보여줌
     public void ShowMessage(string message, float duration = 1f)
     {
         if (CurrentMessage != null)
@@ -51,11 +50,11 @@ public class UIManager : MonoBehaviour
 
     public void ShowCheck()
     {
-        ShowMessage("Check!", MessageDuration);
+        ShowMessage("체크", MessageDuration);
     }
 
     public void ShowCheckmate(int winner)
     {
-        ShowMessage($"{(winner == 1 ? "White" : "Black")} wins by checkmate!", float.MaxValue);
+        ShowMessage($"{(winner == 1 ? "화이트" : "블랙")} (이)가 체크메이트로 이겼습니다", float.MaxValue);
     }
 }
